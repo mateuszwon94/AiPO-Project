@@ -1,8 +1,6 @@
 #pragma once
 
-#include <QtWidgets/QMainWindow>
 #include <opencv2/core.hpp>
-#include <memory>
 #include "ui_MainWindow.h"
 
 class MainWindow : public QMainWindow {
