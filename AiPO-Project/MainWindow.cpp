@@ -8,6 +8,7 @@ MainWindow::MainWindow(QWidget *parent)
 	: QMainWindow(parent), ImageLeft_{nullptr}, ImageRigth_{nullptr}, ImageMixed_{nullptr} {
 	ui.setupUi(this);
 
+
 	connect(ui.AddLeft_Button, SIGNAL(released()), this, SLOT(AddLeftImageHandler()));
 	connect(ui.AddRight_Button, SIGNAL(released()), this, SLOT(AddRightImageHandler())); 
 	connect(ui.RemoveLeft_Button, SIGNAL(released()), this, SLOT(RemoveLeftImageHandler()));
