@@ -15,7 +15,7 @@ MainWindow::MainWindow(QWidget *parent)
 }
 
 MainWindow::~MainWindow() {
-	if (ImageLeft_ != nullptr) 
+	if (ImageLeft_ != nullptr)
 		delete ImageLeft_;
 
 	if (ImageRight_ != nullptr)
@@ -58,31 +58,29 @@ Mat* MainWindow::loadImage() {
 
 void MainWindow::setImage(Mat* image, QLabel* label) {
 	if (image != nullptr && label != nullptr) {
-		QPixmap qpixmap = QPixmap::fromImage(QImage(image->data, image->cols, image->rows, image->step, QImage::Format_RGB888));
 		if (label == ui.LeftImage_Label) {
 			ImageLeft_ = image;
 		}
 		else if (label == ui.RightImage_Label) {
 			ImageRight_ = image;
 		}
-		label->setPixmap(qpixmap.scaled(label->width(), label->height(), Qt::KeepAspectRatio));
+		fitImageToLabel(image, label);
 	}
 	else if (image == nullptr && label != nullptr) {
 		label->clear();
 		if (label == ui.LeftImage_Label && ImageLeft_ != nullptr) {
 			delete ImageLeft_;
+			ImageLeft_ = nullptr;
 		}
 		else if (label == ui.RightImage_Label && ImageRight_ != nullptr) {
 			delete ImageRight_;
+			ImageRight_ = nullptr;
+		}
+		else if (label == ui.MixedImage_Label && ImageMixed_ != nullptr) {
+			delete ImageMixed_;
+			ImageMixed_ = nullptr;
 		}
 	}
-	if (ImageLeft_ && ImageRight_) {
-		if (ImageMixed_)
-			delete ImageMixed_;
-		ImageMixed_ = new HybridImage(ImageLeft_, ImageRight_);
-		fitImageToLabel(ImageMixed_->getHybridImage(), ui.MixedImage_Label);
-	} else 
-		delete ImageMixed_;
 }
 
 void MainWindow::fitImageToLabel(Mat* image, QLabel* label) {
@@ -93,13 +91,13 @@ void MainWindow::fitImageToLabel(Mat* image, QLabel* label) {
 void MainWindow::resizeEvent(QResizeEvent *event) {
 	QWidget::resizeEvent(event);
 	QPixmap qpixmap;
-	if (ImageLeft_) {
+	if (ImageLeft_ != nullptr) {
 		fitImageToLabel(ImageLeft_, ui.LeftImage_Label);
 	}
-	if (ImageRight_) {
+	if (ImageRight_ != nullptr) {
 		fitImageToLabel(ImageRight_, ui.RightImage_Label);
 	}
-	if (ImageMixed_) {
+	if (ImageMixed_ != nullptr) {
 		fitImageToLabel(ImageMixed_->getHybridImage(), ui.MixedImage_Label);
 	}
 }
@@ -116,5 +114,18 @@ void MainWindow::loadImageFromButton(QPushButton* button) {
 		setImage(nullptr, ui.LeftImage_Label);
 	} else if (button == ui.RemoveRigth_Button) {
 		setImage(nullptr, ui.RightImage_Label);
+	}
+	createMixedImage();
+}
+
+void MainWindow::createMixedImage() {
+	if (ImageLeft_ && ImageRight_) {
+		if (ImageMixed_ != nullptr)
+			delete ImageMixed_;
+		ImageMixed_ = new HybridImage(ImageLeft_, ImageRight_);
+		fitImageToLabel(ImageMixed_->getHybridImage(), ui.MixedImage_Label);
+	}
+	else {
+		setImage(nullptr, ui.MixedImage_Label);
 	}
 }

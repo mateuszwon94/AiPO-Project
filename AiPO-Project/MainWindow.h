@@ -24,6 +24,7 @@ private:
 	void fitImageToLabel(cv::Mat* image, QLabel* label);
 	void loadImageFromButton(QPushButton* button);
 	void resizeEvent(QResizeEvent *event);
+	void createMixedImage();
 
 	Ui::MainWindowClass ui;
 	cv::Mat* ImageLeft_;
