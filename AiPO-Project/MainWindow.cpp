@@ -2,6 +2,8 @@
 #include <opencv2/opencv.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
 #include "MainWindow.h"
+#include "HybridImage.h"
+
 
 using namespace cv;
 
