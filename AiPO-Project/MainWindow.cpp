@@ -119,10 +119,11 @@ void MainWindow::loadImageFromButton(QPushButton* button) {
 }
 
 void MainWindow::createMixedImage() {
-	if (ImageLeft_ && ImageRight_) {
+	if (ImageLeft_ != nullptr && ImageRight_ != nullptr) {
 		if (ImageMixed_ != nullptr)
 			delete ImageMixed_;
 		ImageMixed_ = new HybridImage(ImageLeft_, ImageRight_);
+		ImageMixed_->calculateHybridImage(0.5);
 		fitImageToLabel(ImageMixed_->getHybridImage(), ui.MixedImage_Label);
 	}
 	else {
