@@ -20,6 +20,7 @@ private:
 	cv::Mat* loadImage();
 	void setImage(cv::Mat* image, QLabel* label);
 	void loadImageFromButton(QPushButton* button);
+	void resizeEvent(QResizeEvent *event);
 
 	Ui::MainWindowClass ui;
 	cv::Mat* ImageLeft_;

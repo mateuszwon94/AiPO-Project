@@ -15,8 +15,8 @@ MainWindow::MainWindow(QWidget *parent)
 	connect(ui.AddRight_Button, SIGNAL(released()), this, SLOT(AddRightImageHandler())); 
 	connect(ui.RemoveLeft_Button, SIGNAL(released()), this, SLOT(RemoveLeftImageHandler()));
 	connect(ui.RemoveRigth_Button, SIGNAL(released()), this, SLOT(RemoveRightImageHandler()));
-	ui.LeftImage_Label->setScaledContents(true);
-	ui.RightImage_Label->setScaledContents(true);
+	//ui.LeftImage_Label->setScaledContents(true);
+	//ui.RightImage_Label->setScaledContents(true);
 }
 
 MainWindow::~MainWindow() {
@@ -79,6 +79,20 @@ void MainWindow::setImage(Mat* image, QLabel* label) {
 		}
 	}
 }
+
+void MainWindow::resizeEvent(QResizeEvent *event) {
+	QWidget::resizeEvent(event);
+	QPixmap qpixmap;
+	if (ImageLeft_) {
+		qpixmap = QPixmap::fromImage(QImage(ImageLeft_->data, ImageLeft_->cols, ImageLeft_->rows, ImageLeft_->step, QImage::Format_RGB888));
+		ui.LeftImage_Label->setPixmap(qpixmap.scaled(ui.LeftImage_Label->width(), ui.LeftImage_Label->height(), Qt::KeepAspectRatio));
+	}
+	if (ImageRigth_) {
+		qpixmap = QPixmap::fromImage(QImage(ImageRigth_->data, ImageRigth_->cols, ImageRigth_->rows, ImageRigth_->step, QImage::Format_RGB888));
+		ui.RightImage_Label->setPixmap(qpixmap.scaled(ui.RightImage_Label->width(), ui.RightImage_Label->height(), Qt::KeepAspectRatio));
+	}
+}
+
 
 void MainWindow::loadImageFromButton(QPushButton* button) {
 	if (button == ui.AddLeft_Button || button == ui.AddRight_Button) {
