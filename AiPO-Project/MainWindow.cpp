@@ -1,19 +1,20 @@
 #include <QFileDialog> 
 #include <opencv2/opencv.hpp>
+#include <opencv2/imgproc/imgproc.hpp>
 #include "MainWindow.h"
 
 using namespace cv;
 
 MainWindow::MainWindow(QWidget *parent)
 	: QMainWindow(parent), ImageLeft_{nullptr}, ImageRigth_{nullptr}, ImageMixed_{nullptr} {
+
 	ui.setupUi(this);
-
-
 	connect(ui.AddLeft_Button, SIGNAL(released()), this, SLOT(AddLeftImageHandler()));
 	connect(ui.AddRight_Button, SIGNAL(released()), this, SLOT(AddRightImageHandler())); 
 	connect(ui.RemoveLeft_Button, SIGNAL(released()), this, SLOT(RemoveLeftImageHandler()));
 	connect(ui.RemoveRigth_Button, SIGNAL(released()), this, SLOT(RemoveRightImageHandler()));
-
+	ui.LeftImage_Label->setScaledContents(true);
+	ui.RightImage_Label->setScaledContents(true);
 }
 
 MainWindow::~MainWindow() {
@@ -48,7 +49,7 @@ Mat* MainWindow::loadImage() {
 
 	QString fileName = QFileDialog::getOpenFileName(this,
 		tr("Wczytaj obraz po lewej stronie"), "",
-		tr("PNG (*.png);;BMP (*.bmp *.dib);;JPEG (*.jpeg *.jpg *.jpe);;JPEG 2000 (*.jp2);;TIFF (*.tiff *.tif);;Wszystkie pliki (*)"));
+		tr("JPEG (*.jpeg *.jpg *.jpe);;JPEG 2000 (*.jp2);;PNG (*.png);;BMP (*.bmp *.dib);;TIFF (*.tiff *.tif);;Wszystkie pliki (*)"));
 
 	if (!fileName.isEmpty()) {
 		image = imread(fileName.toStdString());
@@ -60,15 +61,13 @@ Mat* MainWindow::loadImage() {
 
 void MainWindow::setImage(Mat* image, QLabel* label) {
 	if (image != nullptr && label != nullptr) {
+		QPixmap qpixmap = QPixmap::fromImage(QImage(image->data, image->cols, image->rows, image->step, QImage::Format_RGB888));
 		if (label == ui.LeftImage_Label) {
 			ImageLeft_ = image;
-			label->setPixmap(QPixmap::fromImage(QImage(ImageLeft_->data, ImageLeft_->cols, ImageLeft_->rows, ImageLeft_->step,
-				QImage::Format_RGB888)));
 		} else if (label == ui.RightImage_Label) {
 			ImageRigth_ = image;
-			label->setPixmap(QPixmap::fromImage(QImage(ImageRigth_->data, ImageRigth_->cols, ImageRigth_->rows, ImageRigth_->step,
-				QImage::Format_RGB888)));
 		}
+		label->setPixmap(qpixmap.scaled(label->width(), label->height(), Qt::KeepAspectRatio));
 	} else if (image == nullptr && label != nullptr) {
 		label->clear();
 		if (label == ui.LeftImage_Label && ImageLeft_ != nullptr) {
