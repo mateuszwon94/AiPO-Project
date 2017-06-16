@@ -2,6 +2,8 @@
 
 #include <opencv2/core.hpp>
 #include "ui_MainWindow.h"
+#include "HybridImage.h"
+
 
 class MainWindow : public QMainWindow {
 	Q_OBJECT
@@ -19,11 +21,12 @@ private slots:
 private:
 	cv::Mat* loadImage();
 	void setImage(cv::Mat* image, QLabel* label);
+	void fitImageToLabel(cv::Mat* image, QLabel* label);
 	void loadImageFromButton(QPushButton* button);
 	void resizeEvent(QResizeEvent *event);
 
 	Ui::MainWindowClass ui;
 	cv::Mat* ImageLeft_;
-	cv::Mat* ImageRigth_;
-	cv::Mat* ImageMixed_;
+	cv::Mat* ImageRight_;
+	HybridImage* ImageMixed_;
 };

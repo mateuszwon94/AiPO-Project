@@ -1,30 +1,25 @@
 #include <QFileDialog> 
 #include <opencv2/opencv.hpp>
-#include <opencv2/imgproc/imgproc.hpp>
 #include "MainWindow.h"
-#include "HybridImage.h"
-
 
 using namespace cv;
 
 MainWindow::MainWindow(QWidget *parent)
-	: QMainWindow(parent), ImageLeft_{nullptr}, ImageRigth_{nullptr}, ImageMixed_{nullptr} {
+	: QMainWindow(parent), ImageLeft_{nullptr}, ImageRight_{nullptr}, ImageMixed_{nullptr} {
 
 	ui.setupUi(this);
 	connect(ui.AddLeft_Button, SIGNAL(released()), this, SLOT(AddLeftImageHandler()));
 	connect(ui.AddRight_Button, SIGNAL(released()), this, SLOT(AddRightImageHandler())); 
 	connect(ui.RemoveLeft_Button, SIGNAL(released()), this, SLOT(RemoveLeftImageHandler()));
 	connect(ui.RemoveRigth_Button, SIGNAL(released()), this, SLOT(RemoveRightImageHandler()));
-	//ui.LeftImage_Label->setScaledContents(true);
-	//ui.RightImage_Label->setScaledContents(true);
 }
 
 MainWindow::~MainWindow() {
 	if (ImageLeft_ != nullptr) 
 		delete ImageLeft_;
 
-	if (ImageRigth_ != nullptr) 
-		delete ImageRigth_;
+	if (ImageRight_ != nullptr)
+		delete ImageRight_;
 
 	if (ImageMixed_ != nullptr) 
 		delete ImageMixed_;
@@ -66,33 +61,48 @@ void MainWindow::setImage(Mat* image, QLabel* label) {
 		QPixmap qpixmap = QPixmap::fromImage(QImage(image->data, image->cols, image->rows, image->step, QImage::Format_RGB888));
 		if (label == ui.LeftImage_Label) {
 			ImageLeft_ = image;
-		} else if (label == ui.RightImage_Label) {
-			ImageRigth_ = image;
+		}
+		else if (label == ui.RightImage_Label) {
+			ImageRight_ = image;
 		}
 		label->setPixmap(qpixmap.scaled(label->width(), label->height(), Qt::KeepAspectRatio));
-	} else if (image == nullptr && label != nullptr) {
+	}
+	else if (image == nullptr && label != nullptr) {
 		label->clear();
 		if (label == ui.LeftImage_Label && ImageLeft_ != nullptr) {
 			delete ImageLeft_;
-		} else if (label == ui.RightImage_Label && ImageRigth_ != nullptr) {
-			delete ImageRigth_;
+		}
+		else if (label == ui.RightImage_Label && ImageRight_ != nullptr) {
+			delete ImageRight_;
 		}
 	}
+	if (ImageLeft_ && ImageRight_) {
+		if (ImageMixed_)
+			delete ImageMixed_;
+		ImageMixed_ = new HybridImage(ImageLeft_, ImageRight_);
+		fitImageToLabel(ImageMixed_->getHybridImage(), ui.MixedImage_Label);
+	} else 
+		delete ImageMixed_;
+}
+
+void MainWindow::fitImageToLabel(Mat* image, QLabel* label) {
+	QPixmap qpixmap = QPixmap::fromImage(QImage(image->data, image->cols, image->rows, image->step, QImage::Format_RGB888));
+	label->setPixmap(qpixmap.scaled(label->width(), label->height(), Qt::KeepAspectRatio));
 }
 
 void MainWindow::resizeEvent(QResizeEvent *event) {
 	QWidget::resizeEvent(event);
 	QPixmap qpixmap;
 	if (ImageLeft_) {
-		qpixmap = QPixmap::fromImage(QImage(ImageLeft_->data, ImageLeft_->cols, ImageLeft_->rows, ImageLeft_->step, QImage::Format_RGB888));
-		ui.LeftImage_Label->setPixmap(qpixmap.scaled(ui.LeftImage_Label->width(), ui.LeftImage_Label->height(), Qt::KeepAspectRatio));
+		fitImageToLabel(ImageLeft_, ui.LeftImage_Label);
 	}
-	if (ImageRigth_) {
-		qpixmap = QPixmap::fromImage(QImage(ImageRigth_->data, ImageRigth_->cols, ImageRigth_->rows, ImageRigth_->step, QImage::Format_RGB888));
-		ui.RightImage_Label->setPixmap(qpixmap.scaled(ui.RightImage_Label->width(), ui.RightImage_Label->height(), Qt::KeepAspectRatio));
+	if (ImageRight_) {
+		fitImageToLabel(ImageRight_, ui.RightImage_Label);
+	}
+	if (ImageMixed_) {
+		fitImageToLabel(ImageMixed_->getHybridImage(), ui.MixedImage_Label);
 	}
 }
-
 
 void MainWindow::loadImageFromButton(QPushButton* button) {
 	if (button == ui.AddLeft_Button || button == ui.AddRight_Button) {
