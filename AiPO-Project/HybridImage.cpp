@@ -7,7 +7,7 @@ using namespace cv;
 using namespace std;
 
 bool IsInCenterBox(int x, int y, int xSize, int ySize, double alpha) {
-	if ( x >= xSize * 2 - xSize * alpha / 2 &&
+	if ( x >= xSize / 2 - xSize * alpha / 2 &&
 		xSize / 2 + xSize * alpha / 2 >= x &&
 		y >= ySize / 2 - ySize * alpha / 2 &&
 		ySize / 2 + ySize * alpha / 2 >= y )
@@ -41,18 +41,26 @@ void HybridImage::calculateHybridImage(double alpha) {
 	for ( size_t i = 0; i < imageLeftChannels.size(); ++i ) {
 		Mat imageLeftChannelDFT = calculateDFT(imageLeftChannels[i]);
 		Mat imageRightChannelDFT = calculateDFT(imageRightChannels[i]);
+		
+		Mat temp = imageLeftChannelDFT.rowRange(rows / 2 - rows * alpha / 2, rows / 2 + rows * alpha / 2)
+									  .colRange(cols / 2 - cols * alpha / 2, cols / 2 + cols * alpha / 2);
+		Mat channel = Mat(imageRightChannelDFT);
 
-		Mat channel = Mat(rows, cols, CV_32FC2);
+		Rect roi(Point(rows / 2 - rows * alpha / 2, cols / 2 - cols * alpha / 2), temp.size());
+		
+		temp.copyTo(channel(roi));
 
-		for ( size_t x = 0; x < rows; ++x ) {
+		/*for ( size_t x = 0; x < rows; ++x ) {
 			for ( size_t y = 0; y < cols; ++y ) {
 				if ( IsInCenterBox(x, y, rows, cols, alpha) ) {
-					channel.at<float>(x, y) = imageLeftChannelDFT.at<float>(x, y);
+					channel.at<float>(x, y, 0) = imageLeftChannelDFT.at<float>(x, y, 0);
+					channel.at<float>(x, y, 1) = imageLeftChannelDFT.at<float>(x, y, 1);
 				} else {
-					channel.at<float>(x, y) = imageRightChannelDFT.at<float>(x, y);
+					channel.at<float>(x, y, 0) = imageRightChannelDFT.at<float>(x, y, 0);
+					channel.at<float>(x, y, 1) = imageRightChannelDFT.at<float>(x, y, 1);
 				}
 			}
-		}
+		}*/
 
 		imageMixedChannels[i] = calculateIDFT(channel);
 	}
