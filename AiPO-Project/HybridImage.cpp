@@ -7,14 +7,6 @@
 using namespace cv;
 using namespace std;
 
-bool IsInCenterBox(int x, int y, double xSize, double ySize, double alpha) {
-	if ( x >= int((xSize - xSize * alpha) / 2.0) &&
-		int((xSize + xSize * alpha) / 2.0) >= x &&
-		y >= int((ySize - ySize * alpha) / 2.0) &&
-		int((ySize + ySize * alpha) / 2.0) >= y )
-		return true;
-	else return false;
-}
 
 HybridImage::HybridImage(Mat* left_image, Mat* right_image) 
 	: ImageLeft_(left_image), ImageRight_(right_image), ImageMixed_(nullptr) {
@@ -91,9 +83,6 @@ Mat HybridImage::calculateDFT(Mat image) {
 	return complex_image;
 }
 
-Mat HybridImage::filterDFT(Mat imageDFT, Mat filter) {
-	return Mat(imageDFT * filter);
-}
 
 Mat HybridImage::calculateIDFT(Mat complex_image) {
 	Mat output_image;
@@ -103,8 +92,8 @@ Mat HybridImage::calculateIDFT(Mat complex_image) {
 }
 
 Mat HybridImage::makeGaussianFilter(size_t numRows, size_t numCols, double sigma, bool highPass) {
-	size_t centerI = numRows % 2 == 1 ? int(numRows / 2) + 1 : int(numRows / 2);
-	size_t centerJ = numCols % 2 == 1 ? int(numCols / 2) + 1 : int(numCols / 2);
+	size_t centerI = int(numRows / 2) + (numRows % 2);
+	size_t centerJ = int(numCols / 2) + (numCols % 2);
 
 	Mat filter(numRows, numCols, CV_32FC1);
 

@@ -1,4 +1,5 @@
-#include <QFileDialog> 
+#include <QFileDialog>
+#include <QBuffer>
 #include <opencv2/opencv.hpp>
 #include "MainWindow.h"
 
@@ -12,6 +13,9 @@ MainWindow::MainWindow(QWidget *parent)
 	connect(ui.AddRight_Button, SIGNAL(released()), this, SLOT(AddRightImageHandler())); 
 	connect(ui.RemoveLeft_Button, SIGNAL(released()), this, SLOT(RemoveLeftImageHandler()));
 	connect(ui.RemoveRigth_Button, SIGNAL(released()), this, SLOT(RemoveRightImageHandler()));
+	connect(ui.Adjust_Slider, SIGNAL(valueChanged(int)), this, SLOT(MixedImageHandler()));
+	connect(ui.SaveImage_Button, SIGNAL(released()), this, SLOT(SaveImageHandler()));
+	connect(ui.SaveAnimation_Button, SIGNAL(released()), this, SLOT(SaveAnimationHandler()));
 }
 
 MainWindow::~MainWindow() {
@@ -41,19 +45,40 @@ void MainWindow::RemoveRightImageHandler() {
 	loadImageFromButton(ui.RemoveRigth_Button);
 }
 
+void MainWindow::SaveImageHandler() {
+	saveImage();
+}
+
+void MainWindow::SaveAnimationHandler() {
+	
+}
+
+void MainWindow::MixedImageHandler() {
+	createMixedImage();
+}
+
+void MainWindow::saveImage() {
+	if (ImageMixed_ != nullptr) {
+		QString fileName = QFileDialog::getSaveFileName(this, tr("Save file"), "", tr("PNG (*.png);;JPEG (*.jpeg *.jpg *.jpe)"));
+		Mat* hybrid_image = ImageMixed_->getHybridImage();
+		QImage image = QImage(hybrid_image->data, hybrid_image->cols, hybrid_image->rows, hybrid_image->step, QImage::Format_RGB888);
+		image.save(fileName);
+	}
+}
+
 Mat* MainWindow::loadImage() {
 	Mat image;
 
 	QString fileName = QFileDialog::getOpenFileName(this,
 													tr("Wczytaj obraz po lewej stronie"), "",
-													tr("JPEG (*.jpeg *.jpg *.jpe);;JPEG 2000 (*.jp2);;PNG (*.png);;BMP (*.bmp *.dib);;TIFF (*.tiff *.tif);;Wszystkie pliki (*)"));
+													tr("PNG (*.png);;JPEG (*.jpeg *.jpg *.jpe);;JPEG 2000 (*.jp2);;BMP (*.bmp *.dib);;TIFF (*.tiff *.tif);;Wszystkie pliki (*)"));
 
 	if ( !fileName.isEmpty() ) {
-		image = imread(fileName.toStdString());
-		if ( image.channels() == 4 )
-			cvtColor(image, image, CV_BGRA2RGB);
-		else
-			cvtColor(image, image, CV_BGR2RGB);
+		image = imread(fileName.toStdString(), CV_LOAD_IMAGE_COLOR);
+		if (!image.data) {
+			exit(EXIT_FAILURE);
+		}
+		cvtColor(image, image, CV_BGR2RGB);
 	}
 
 	return new Mat(image);

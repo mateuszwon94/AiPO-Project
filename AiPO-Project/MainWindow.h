@@ -17,9 +17,13 @@ private slots:
 	void AddRightImageHandler();
 	void RemoveLeftImageHandler();
 	void RemoveRightImageHandler();
+	void SaveImageHandler();
+	void SaveAnimationHandler();
+	void MixedImageHandler();
 
 private:
 	cv::Mat* loadImage();
+	void saveImage();
 	void setImage(cv::Mat* image, QLabel* label);
 	void fitImageToLabel(cv::Mat* image, QLabel* label);
 	void loadImageFromButton(QPushButton* button);
