@@ -1,11 +1,11 @@
 #include <opencv2/opencv.hpp>
 #include <opencv2/core/core.hpp>
 #include <vector>
+#include <cmath>
 #include "HybridImage.h"
 
 using namespace cv;
 using namespace std;
-
 
 bool IsInCenterBox(int x, int y, double xSize, double ySize, double alpha) {
 	if ( x >= int((xSize - xSize * alpha) / 2.0) &&
@@ -34,25 +34,33 @@ void HybridImage::calculateHybridImage(double alpha) {
 	split(*ImageLeft_, imageLeftChannels);
 	split(*ImageRight_, imageRightChannels);
 
+	int rows = ImageLeft_->rows;
+	int cols = ImageLeft_->cols;
+
+	Mat lowPassFilter = makeGaussianFilter(rows, cols, alpha, false);
+	Mat highPassFilter = makeGaussianFilter(rows, cols, alpha, true);
+
 	for ( size_t i = 0; i < imageLeftChannels.size(); ++i ) {
 		Mat imageLeftChannelDFT = calculateDFT(imageLeftChannels[i]);
 		Mat imageRightChannelDFT = calculateDFT(imageRightChannels[i]);
 
-		int rows = imageLeftChannelDFT.rows;
-		int cols = imageLeftChannelDFT.cols;
-
 		Mat left_channel = swapQuarters(imageLeftChannelDFT);
-		Mat right_channel = swapQuarters(imageRightChannelDFT);
-		Mat mixed_channel = Mat(imageRightChannelDFT.size(), imageLeftChannelDFT.type());
 
-		for ( size_t x = 0; x < rows; ++x) {
-			for ( size_t y = 0; y < cols; ++y) {
-				if (IsInCenterBox(x, y, rows, cols, alpha))
-					mixed_channel.at<float>(x, y) = imag(imageLeftChannelDFT.at<float>(x, y));
-				else
-					mixed_channel.at<float>(x, y) = imag(imageRightChannelDFT.at<float>(x, y));
+		for ( size_t x = 0; x < rows; ++x ) {
+			for ( size_t y = 0; y < cols; ++y ) {
+				left_channel.at<float>(x, y) *= highPassFilter.at<float>(x, y);
 			}
 		}
+
+		Mat right_channel = swapQuarters(imageRightChannelDFT);
+
+		for ( size_t x = 0; x < rows; ++x ) {
+			for ( size_t y = 0; y < cols; ++y ) {
+				right_channel.at<float>(x, y) *= lowPassFilter.at<float>(x, y);
+			}
+		}
+
+		Mat mixed_channel = left_channel + right_channel;
 		mixed_channel = swapQuarters(mixed_channel);
 		imageMixedChannels[i] = calculateIDFT(mixed_channel);
 	}
@@ -62,7 +70,7 @@ void HybridImage::calculateHybridImage(double alpha) {
 	ImageMixed_ = new Mat(merged);
 }
 
-Mat HybridImage::swapQuarters(Mat complex_image) {
+Mat& HybridImage::swapQuarters(Mat& complex_image) {
 	Mat tmp;
 	Mat q0(complex_image, Rect(0, 0, complex_image.cols / 2, complex_image.rows / 2));
 	Mat q1(complex_image, Rect(complex_image.cols / 2, 0, complex_image.cols / 2, complex_image.rows / 2));
@@ -83,9 +91,29 @@ Mat HybridImage::calculateDFT(Mat image) {
 	return complex_image;
 }
 
+Mat HybridImage::filterDFT(Mat imageDFT, Mat filter) {
+	return Mat(imageDFT * filter);
+}
+
 Mat HybridImage::calculateIDFT(Mat complex_image) {
 	Mat output_image;
 	idft(complex_image, output_image, DFT_SCALE | DFT_REAL_OUTPUT, 0);
 	output_image.convertTo(output_image, CV_8UC1);
 	return output_image;
+}
+
+Mat HybridImage::makeGaussianFilter(size_t numRows, size_t numCols, double sigma, bool highPass) {
+	size_t centerI = numRows % 2 == 1 ? int(numRows / 2) + 1 : int(numRows / 2);
+	size_t centerJ = numCols % 2 == 1 ? int(numCols / 2) + 1 : int(numCols / 2);
+
+	Mat filter(numRows, numCols, CV_32FC1);
+
+	for ( size_t i = 0; i < numRows; ++i ) {
+		for ( size_t j = 0; j < numRows; ++j ) {
+			float coefficient = exp(-1.0 * (pow(i - centerI, 2) + pow(j - centerJ, 2)) / (2 * pow(sigma, 2)));
+			filter.at<float>(i, j) = highPass ? 1 - coefficient : coefficient;
+		}
+	}
+
+	return filter;
 }
