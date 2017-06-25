@@ -25,6 +25,7 @@ private:
 	void loadImageFromButton(QPushButton* button);
 	void resizeEvent(QResizeEvent *event);
 	void createMixedImage();
+	double getSliderValue();
 
 	Ui::MainWindowClass ui;
 	cv::Mat* ImageLeft_;

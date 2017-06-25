@@ -50,7 +50,10 @@ Mat* MainWindow::loadImage() {
 
 	if ( !fileName.isEmpty() ) {
 		image = imread(fileName.toStdString());
-		cvtColor(image, image, CV_BGR2RGB);
+		if ( image.channels() == 4 )
+			cvtColor(image, image, CV_BGRA2RGB);
+		else
+			cvtColor(image, image, CV_BGR2RGB);
 	}
 
 	return new Mat(image);
@@ -119,9 +122,13 @@ void MainWindow::createMixedImage() {
 		if ( ImageMixed_ != nullptr )
 			delete ImageMixed_;
 		ImageMixed_ = new HybridImage(ImageLeft_, ImageRight_);
-		ImageMixed_->calculateHybridImage();
+		ImageMixed_->calculateHybridImage(getSliderValue());
 		fitImageToLabel(ImageMixed_->getHybridImage(), ui.MixedImage_Label);
 	} else {
 		setImage(nullptr, ui.MixedImage_Label);
 	}
+}
+
+double MainWindow::getSliderValue() {
+	return ui.Adjust_Slider->value()/100.0;
 }
