@@ -155,5 +155,5 @@ void MainWindow::createMixedImage() {
 }
 
 double MainWindow::getSliderValue() {
-	return ui.Adjust_Slider->value()/100.0;
+	return ui.Adjust_Slider->value();
 }

@@ -15,11 +15,9 @@ public:
 
 private:
 	cv::Mat calculateDFT(cv::Mat image);
-	cv::Mat filterDFT(cv::Mat image, cv::Mat filter);
 	cv::Mat calculateIDFT(cv::Mat complex_image);
 	cv::Mat& swapQuarters(cv::Mat& complex_image);
 	cv::Mat makeGaussianFilter(size_t numRows, size_t numCols, double sigma, bool highPass = true);
-
 
 	cv::Mat* ImageLeft_;
 	cv::Mat* ImageRight_;

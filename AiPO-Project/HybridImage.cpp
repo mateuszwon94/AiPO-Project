@@ -35,7 +35,7 @@ void HybridImage::calculateHybridImage(double alpha) {
 	for ( size_t i = 0; i < imageLeftChannels.size(); ++i ) {
 		Mat imageLeftChannelDFT = calculateDFT(imageLeftChannels[i]);
 		Mat imageRightChannelDFT = calculateDFT(imageRightChannels[i]);
-
+		
 		Mat left_channel = swapQuarters(imageLeftChannelDFT);
 
 		for ( size_t x = 0; x < rows; ++x ) {
@@ -53,8 +53,16 @@ void HybridImage::calculateHybridImage(double alpha) {
 		}
 
 		Mat mixed_channel = left_channel + right_channel;
-		mixed_channel = swapQuarters(mixed_channel);
-		imageMixedChannels[i] = calculateIDFT(mixed_channel);
+		
+		/*Mat mixed_channel(rows, cols, CV_32FC1);
+		for (size_t x = 0; x < rows; ++x) {
+			for (size_t y = 0; y < cols; ++y) {
+				mixed_channel.at<float>(x, y) = max(right_channel.at<float>(x, y) * lowPassFilter.at<float>(x, y), left_channel.at<float>(x, y) * highPassFilter.at<float>(x, y));
+			}
+		}*/
+
+		imageMixedChannels[i] = calculateIDFT(swapQuarters(mixed_channel));
+
 	}
 	
 	Mat merged;
@@ -79,30 +87,33 @@ Mat HybridImage::calculateDFT(Mat image) {
 	copyMakeBorder(image, image_with_border, 0, getOptimalDFTSize(image.rows) - image.rows, 0, getOptimalDFTSize(image.cols) - image.cols, BORDER_CONSTANT, Scalar::all(0));
 	Mat planes[] = { Mat_<float>(image_with_border), Mat::zeros(image_with_border.size(), CV_32FC1) };
 	merge(planes, 2, complex_image);
-	dft(complex_image, complex_image, DFT_COMPLEX_OUTPUT, 0);
+	dft(complex_image, complex_image, DFT_COMPLEX_OUTPUT);
 	return complex_image;
 }
 
 
 Mat HybridImage::calculateIDFT(Mat complex_image) {
 	Mat output_image;
-	idft(complex_image, output_image, DFT_SCALE | DFT_REAL_OUTPUT, 0);
+	idft(complex_image, output_image, DFT_SCALE | DFT_REAL_OUTPUT);
 	output_image.convertTo(output_image, CV_8UC1);
 	return output_image;
 }
 
 Mat HybridImage::makeGaussianFilter(size_t numRows, size_t numCols, double sigma, bool highPass) {
-	size_t centerI = int(numRows / 2) + (numRows % 2);
-	size_t centerJ = int(numCols / 2) + (numCols % 2);
+	size_t centerI = int(numRows / 2.0) + (numRows % 2);
+	size_t centerJ = int(numCols / 2.0) + (numCols % 2);
+	sigma *= 5.0;
 
 	Mat filter(numRows, numCols, CV_32FC1);
-
 	for ( size_t i = 0; i < numRows; ++i ) {
 		for ( size_t j = 0; j < numRows; ++j ) {
-			float coefficient = exp(-1.0 * (pow(i - centerI, 2) + pow(j - centerJ, 2)) / (2 * pow(sigma, 2)));
-			filter.at<float>(i, j) = highPass ? 1 - coefficient : coefficient;
+			float coefficient = exp(-1.0 * ((i - centerI) * (i - centerI) + (j - centerJ) * (j - centerJ)) / (2 * sigma * sigma));
+			filter.at<float>(i, j) = highPass ? 1.0 - coefficient : coefficient;
 		}
 	}
-
+	if (highPass)
+		imshow("highPass", filter);
+	else
+		imshow("lowPass", filter);
 	return filter;
 }
