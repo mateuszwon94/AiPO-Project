@@ -1,9 +1,11 @@
 #include <QFileDialog>
 #include <QBuffer>
+#include <vector>
 #include <opencv2/opencv.hpp>
 #include "MainWindow.h"
 
 using namespace cv;
+using namespace std;
 
 MainWindow::MainWindow(QWidget *parent)
 	: QMainWindow(parent), ImageLeft_{nullptr}, ImageRight_{nullptr}, ImageMixed_{nullptr} {
@@ -50,7 +52,27 @@ void MainWindow::SaveImageHandler() {
 }
 
 void MainWindow::SaveAnimationHandler() {
-	
+	if ( ImageLeft_ != nullptr && ImageRight_ != nullptr ) {
+		int rows = ImageLeft_->rows;
+		int cols = ImageLeft_->cols;
+		vector<Mat> frames;
+
+		int i = 0;
+		for ( double alpha = 0.0; alpha <= 1; alpha += 0.1, ++i ) {
+			HybridImage hybridImage(ImageLeft_, ImageRight_);
+			hybridImage.calculateHybridImage(alpha);
+			frames.push_back(*hybridImage.getHybridImage());
+			imshow(to_string(alpha), frames[i]);
+		}
+
+		//QString fileName = QFileDialog::getSaveFileName(this, tr("Save file"), "", tr("MJPG (*.avi)"));
+		
+		//VideoWriter out_capture(fileName.toStdString(), CV_FOURCC('M', 'J', 'P', 'G'), 30, Size(rows, cols));
+		/*for ( int i = 0; i < frames.size(); ++i ) {
+			imshow(to_string(i), frames[i]);
+			out_capture.write(frames[i]);
+		}*/
+	}
 }
 
 void MainWindow::MixedImageHandler() {
@@ -148,12 +170,12 @@ void MainWindow::createMixedImage() {
 			delete ImageMixed_;
 		ImageMixed_ = new HybridImage(ImageLeft_, ImageRight_);
 		ImageMixed_->calculateHybridImage(getSliderValue());
-		fitImageToLabel(ImageMixed_->getHybridImage(), ui.MixedImage_Label);
+		setImage(ImageMixed_->getHybridImage(), ui.MixedImage_Label);
 	} else {
 		setImage(nullptr, ui.MixedImage_Label);
 	}
 }
 
 double MainWindow::getSliderValue() {
-	return ui.Adjust_Slider->value();
+	return ui.Adjust_Slider->value() / static_cast<double>(ui.Adjust_Slider->maximum());
 }

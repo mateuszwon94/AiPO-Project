@@ -9,8 +9,7 @@ using namespace std;
 
 
 HybridImage::HybridImage(Mat* left_image, Mat* right_image) 
-	: ImageLeft_(left_image), ImageRight_(right_image), ImageMixed_(nullptr) {
-}
+	: ImageLeft_(left_image), ImageRight_(right_image), ImageMixed_(nullptr) { }
 
 HybridImage::~HybridImage() {
 	delete ImageMixed_;
@@ -37,20 +36,43 @@ void HybridImage::calculateHybridImage(double alpha) {
 		Mat imageRightChannelDFT = calculateDFT(imageRightChannels[i]);
 		
 		Mat left_channel = swapQuarters(imageLeftChannelDFT);
-
-		for ( size_t x = 0; x < rows; ++x ) {
+		
+		/*for ( size_t x = 0; x < rows; ++x ) {
 			for ( size_t y = 0; y < cols; ++y ) {
 				left_channel.at<float>(x, y) *= highPassFilter.at<float>(x, y);
 			}
+		}*/
+
+		vector<Mat> temp(2);
+		split(left_channel, temp);
+		for ( Mat& mat : temp ) {
+			for ( size_t x = 0; x < rows; ++x ) {
+				for ( size_t y = 0; y < cols; ++y ) {
+					mat.at<float>(x, y) *= highPassFilter.at<float>(x, y);
+				}
+			}
 		}
+		merge(temp, left_channel);
+		imshow("left_channel"s + to_string(i), temp[0]);
 
 		Mat right_channel = swapQuarters(imageRightChannelDFT);
 
-		for ( size_t x = 0; x < rows; ++x ) {
+		/*for ( size_t x = 0; x < rows; ++x ) {
 			for ( size_t y = 0; y < cols; ++y ) {
 				right_channel.at<float>(x, y) *= lowPassFilter.at<float>(x, y);
 			}
+		}*/
+
+		split(right_channel, temp);
+		for ( Mat& mat : temp ) {
+			for ( size_t x = 0; x < rows; ++x ) {
+				for ( size_t y = 0; y < cols; ++y ) {
+					mat.at<float>(x, y) *= highPassFilter.at<float>(x, y);
+				}
+			}
 		}
+		merge(temp, right_channel);
+		imshow("right_channel"s + to_string(i), temp[0]);
 
 		Mat mixed_channel = left_channel + right_channel;
 		
@@ -62,7 +84,7 @@ void HybridImage::calculateHybridImage(double alpha) {
 		}*/
 
 		imageMixedChannels[i] = calculateIDFT(swapQuarters(mixed_channel));
-
+		imshow("imageMixedChannels"s + to_string(i), imageMixedChannels[i]);
 	}
 	
 	Mat merged;
@@ -70,7 +92,7 @@ void HybridImage::calculateHybridImage(double alpha) {
 	ImageMixed_ = new Mat(merged);
 }
 
-Mat& HybridImage::swapQuarters(Mat& complex_image) {
+Mat HybridImage::swapQuarters(Mat complex_image) {
 	Mat tmp;
 	Mat q0(complex_image, Rect(0, 0, complex_image.cols / 2, complex_image.rows / 2));
 	Mat q1(complex_image, Rect(complex_image.cols / 2, 0, complex_image.cols / 2, complex_image.rows / 2));

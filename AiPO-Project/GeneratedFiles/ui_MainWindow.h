@@ -138,6 +138,7 @@ public:
         Adjust_Slider->setSizePolicy(sizePolicy2);
         Adjust_Slider->setMinimumSize(QSize(150, 22));
         Adjust_Slider->setMaximum(100);
+        Adjust_Slider->setSingleStep(0);
         Adjust_Slider->setValue(50);
         Adjust_Slider->setOrientation(Qt::Horizontal);
 
@@ -182,7 +183,7 @@ public:
         scrollArea->setWidgetResizable(true);
         scrollAreaWidgetContents = new QWidget();
         scrollAreaWidgetContents->setObjectName(QStringLiteral("scrollAreaWidgetContents"));
-        scrollAreaWidgetContents->setGeometry(QRect(0, 0, 891, 476));
+        scrollAreaWidgetContents->setGeometry(QRect(0, 0, 887, 468));
         horizontalLayout_4 = new QHBoxLayout(scrollAreaWidgetContents);
         horizontalLayout_4->setSpacing(6);
         horizontalLayout_4->setContentsMargins(10, 10, 10, 10);

@@ -27,7 +27,7 @@ private:
 	void setImage(cv::Mat* image, QLabel* label);
 	void fitImageToLabel(cv::Mat* image, QLabel* label);
 	void loadImageFromButton(QPushButton* button);
-	void resizeEvent(QResizeEvent *event);
+	void resizeEvent(QResizeEvent *event) override;
 	void createMixedImage();
 	double getSliderValue();
 
