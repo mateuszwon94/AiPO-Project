@@ -89,14 +89,14 @@ void HybridImage::calculateHybridImage(double alpha) {
 		Mat leftChannel = getImage(this->highPassFilter(getSpectrum(imageLeftChannels[i]), 0));
 		Mat rightChannel = getImage(this->lowPassFilter(getSpectrum(imageRightChannels[i]), 0));
 
-		imshow("Left1"s + to_string(i), getSpectrumImage(imageLeftChannels[i]));
-		imshow("Right1"s + to_string(i), getSpectrumImage(imageRightChannels[i]));
+		//imshow("Left1"s + to_string(i), getSpectrumImage(imageLeftChannels[i]));
+		//imshow("Right1"s + to_string(i), getSpectrumImage(imageRightChannels[i]));
 
-		imshow("Left2"s + to_string(i), getSpectrumImage(leftChannel));
-		imshow("Right2"s + to_string(i), getSpectrumImage(rightChannel));
+		//imshow("Left2"s + to_string(i), getSpectrumImage(leftChannel));
+		//imshow("Right2"s + to_string(i), getSpectrumImage(rightChannel));
 
 		imageMixedChannels[i] = rightChannel + leftChannel;
-		imshow("imageMixedChannels"s + to_string(i), imageMixedChannels[i]);
+		//imshow("imageMixedChannels"s + to_string(i), imageMixedChannels[i]);
 	}
 	
 	Mat merged;
@@ -145,10 +145,10 @@ Mat HybridImage::makeGaussianFilter(size_t numRows, size_t numCols, double sigma
 			filter.at<float>(i, j) = highPass ? 1.0 - coefficient : coefficient;
 		}
 	}
-	if ( highPass )
-		imshow("highPass", filter);
-	else
-		imshow("lowPass", filter);
+	//if ( highPass )
+		//imshow("highPass", filter);
+	//else
+		//imshow("lowPass", filter);
 	return filter;
 }
 

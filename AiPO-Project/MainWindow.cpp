@@ -1,4 +1,5 @@
-#include <QFileDialog>
+﻿#include <QFileDialog>
+#include <QMessageBox>
 #include <QBuffer>
 #include <vector>
 #include <opencv2/opencv.hpp>
@@ -52,27 +53,7 @@ void MainWindow::SaveImageHandler() {
 }
 
 void MainWindow::SaveAnimationHandler() {
-	if ( ImageLeft_ != nullptr && ImageRight_ != nullptr ) {
-		int rows = ImageLeft_->rows;
-		int cols = ImageLeft_->cols;
-		vector<Mat> frames;
-
-		int i = 0;
-		for ( double alpha = 0.0; alpha <= 1; alpha += 0.1, ++i ) {
-			HybridImage hybridImage(ImageLeft_, ImageRight_);
-			hybridImage.calculateHybridImage(alpha);
-			frames.push_back(*hybridImage.getHybridImage());
-			//imshow(to_string(alpha), frames[i]);
-		}
-
-		//QString fileName = QFileDialog::getSaveFileName(this, tr("Save file"), "", tr("MJPG (*.avi)"));
-		
-		//VideoWriter out_capture(fileName.toStdString(), CV_FOURCC('M', 'J', 'P', 'G'), 30, Size(rows, cols));
-		/*for ( int i = 0; i < frames.size(); ++i ) {
-			imshow(to_string(i), frames[i]);
-			out_capture.write(frames[i]);
-		}*/
-	}
+	saveMovie();
 }
 
 void MainWindow::MixedImageHandler() {
@@ -85,7 +66,59 @@ void MainWindow::saveImage() {
 		Mat* hybrid_image = ImageMixed_->getHybridImage();
 		QImage image = QImage(hybrid_image->data, hybrid_image->cols, hybrid_image->rows, hybrid_image->step, QImage::Format_RGB888);
 		image.save(fileName);
-	}
+	} else
+		QMessageBox::warning(this, tr("Hybrid Images"), tr("Nie można zapisać!"));
+}
+
+void MainWindow::saveMovie() {
+	if (ImageMixed_ != nullptr) {
+		int rows = ImageMixed_->getHybridImage()->rows;
+		int cols = ImageMixed_->getHybridImage()->cols;
+		std::vector<Mat> frames;
+
+		double fps = 25.0;
+		int codec = CV_FOURCC('M', 'J', 'P', 'G');
+		QString fileName = QFileDialog::getSaveFileName(this, tr("Save file"), "", tr("MJPG (*.avi)"));
+		VideoWriter out_capture;
+		out_capture.open(fileName.toStdString(), codec, fps, Size(rows, cols), true);
+
+		if (!out_capture.isOpened()) {
+			QMessageBox::warning(this, tr("Hybrid Images"), tr("Nie można zapisać!"));
+			return;
+		}
+
+		Mat frame;
+		for (double k = 1.0; k >= 0.2; k -= 0.005) {
+			//Mat* hybrid_image = ImageMixed_->getHybridImage();
+			Mat* hybrid_image = ImageLeft_;
+			cv::resize(*hybrid_image, frame, Size(int(rows*k), int(cols*k)));
+			cvtColor(frame, frame, CV_RGB2BGR);
+			copyMakeBorder(frame, frame, int(rows * (1.0 - k) / 2), int(rows * (1.0 - k) / 2), int(cols * (1.0 - k) / 2), int(cols * (1.0 - k) / 2), BORDER_CONSTANT, Scalar::all(0));
+			cv::resize(frame, frame, Size(rows, cols));
+			frames.push_back(frame);
+			imshow("", frame);
+			waitKey(30);
+		}
+
+		for (int i = 0; i < fps; ++i)
+			out_capture << frames[0];
+
+		for (int i = 0; i < frames.size(); ++i)
+			out_capture << frames[i];
+
+		for (int i = 0; i < fps; ++i)
+			out_capture << frames[frames.size() - 1];
+
+		for (int i = frames.size() - 1; i >= 0; --i)
+			out_capture << frames[i];
+		
+		for (int i = 0; i < fps; ++i)
+			out_capture << frames[0];
+
+		QMessageBox::information(this, tr("Hybrid Images"), tr("Zapisano animację wynikową."));
+		
+	} else
+		QMessageBox::warning(this, tr("Hybrid Images"), tr("Nie można zapisać!"));
 }
 
 Mat* MainWindow::loadImage() {
@@ -177,5 +210,5 @@ void MainWindow::createMixedImage() {
 }
 
 double MainWindow::getSliderValue() {
-	return ui.Adjust_Slider->value() / static_cast<double>(ui.Adjust_Slider->maximum());
+	return ui.Adjust_Slider->value();
 }

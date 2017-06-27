@@ -24,6 +24,7 @@ private slots:
 private:
 	cv::Mat* loadImage();
 	void saveImage();
+	void saveMovie();
 	void setImage(cv::Mat* image, QLabel* label);
 	void fitImageToLabel(cv::Mat* image, QLabel* label);
 	void loadImageFromButton(QPushButton* button);
