@@ -62,7 +62,7 @@ void MainWindow::SaveAnimationHandler() {
 			HybridImage hybridImage(ImageLeft_, ImageRight_);
 			hybridImage.calculateHybridImage(alpha);
 			frames.push_back(*hybridImage.getHybridImage());
-			imshow(to_string(alpha), frames[i]);
+			//imshow(to_string(alpha), frames[i]);
 		}
 
 		//QString fileName = QFileDialog::getSaveFileName(this, tr("Save file"), "", tr("MJPG (*.avi)"));

@@ -32,10 +32,10 @@ void HybridImage::calculateHybridImage(double alpha) {
 	Mat highPassFilter = makeGaussianFilter(rows, cols, alpha, true);
 
 	for ( size_t i = 0; i < imageLeftChannels.size(); ++i ) {
-		Mat imageLeftChannelDFT = calculateDFT(imageLeftChannels[i]);
+		/*Mat imageLeftChannelDFT = calculateDFT(imageLeftChannels[i]);
 		Mat imageRightChannelDFT = calculateDFT(imageRightChannels[i]);
 		
-		Mat left_channel = swapQuarters(imageLeftChannelDFT);
+		Mat left_channel = swapQuarters(imageLeftChannelDFT);*/
 		
 		/*for ( size_t x = 0; x < rows; ++x ) {
 			for ( size_t y = 0; y < cols; ++y ) {
@@ -43,7 +43,7 @@ void HybridImage::calculateHybridImage(double alpha) {
 			}
 		}*/
 
-		vector<Mat> temp(2);
+		/*vector<Mat> temp(2);
 		split(left_channel, temp);
 		for ( Mat& mat : temp ) {
 			for ( size_t x = 0; x < rows; ++x ) {
@@ -55,7 +55,7 @@ void HybridImage::calculateHybridImage(double alpha) {
 		merge(temp, left_channel);
 		imshow("left_channel"s + to_string(i), temp[0]);
 
-		Mat right_channel = swapQuarters(imageRightChannelDFT);
+		Mat right_channel = swapQuarters(imageRightChannelDFT);*/
 
 		/*for ( size_t x = 0; x < rows; ++x ) {
 			for ( size_t y = 0; y < cols; ++y ) {
@@ -63,7 +63,7 @@ void HybridImage::calculateHybridImage(double alpha) {
 			}
 		}*/
 
-		split(right_channel, temp);
+		/*split(right_channel, temp);
 		for ( Mat& mat : temp ) {
 			for ( size_t x = 0; x < rows; ++x ) {
 				for ( size_t y = 0; y < cols; ++y ) {
@@ -74,7 +74,7 @@ void HybridImage::calculateHybridImage(double alpha) {
 		merge(temp, right_channel);
 		imshow("right_channel"s + to_string(i), temp[0]);
 
-		Mat mixed_channel = left_channel + right_channel;
+		Mat mixed_channel = left_channel + right_channel;*/
 		
 		/*Mat mixed_channel(rows, cols, CV_32FC1);
 		for (size_t x = 0; x < rows; ++x) {
@@ -83,7 +83,19 @@ void HybridImage::calculateHybridImage(double alpha) {
 			}
 		}*/
 
-		imageMixedChannels[i] = calculateIDFT(swapQuarters(mixed_channel));
+		/*imageMixedChannels[i] = calculateIDFT(swapQuarters(mixed_channel));
+		imshow("imageMixedChannels"s + to_string(i), imageMixedChannels[i]);*/
+
+		Mat leftChannel = getImage(this->highPassFilter(getSpectrum(imageLeftChannels[i]), 0));
+		Mat rightChannel = getImage(this->lowPassFilter(getSpectrum(imageRightChannels[i]), 0));
+
+		imshow("Left1"s + to_string(i), getSpectrumImage(imageLeftChannels[i]));
+		imshow("Right1"s + to_string(i), getSpectrumImage(imageRightChannels[i]));
+
+		imshow("Left2"s + to_string(i), getSpectrumImage(leftChannel));
+		imshow("Right2"s + to_string(i), getSpectrumImage(rightChannel));
+
+		imageMixedChannels[i] = rightChannel + leftChannel;
 		imshow("imageMixedChannels"s + to_string(i), imageMixedChannels[i]);
 	}
 	
@@ -133,9 +145,86 @@ Mat HybridImage::makeGaussianFilter(size_t numRows, size_t numCols, double sigma
 			filter.at<float>(i, j) = highPass ? 1.0 - coefficient : coefficient;
 		}
 	}
-	if (highPass)
+	if ( highPass )
 		imshow("highPass", filter);
 	else
 		imshow("lowPass", filter);
 	return filter;
+}
+
+Mat HybridImage::filter(const Mat &spectrum, double cutoffFreq, int type) {
+	Mat filter;
+	Mat planes_of_filter[] = {
+		Mat(spectrum.size(), CV_32F,Scalar(type)),
+		Mat(spectrum.size(), CV_32F,Scalar(type))
+	};
+
+	for ( int u = 0; u < planes_of_filter[0].rows; u++ ) {
+		for ( int v = 0; v < planes_of_filter[0].cols; v++ ) {
+			if ( sqrt(pow((u - spectrum.rows / 2), 2) + pow((v - spectrum.cols / 2), 2)) <cutoffFreq*spectrum.rows / sqrt(2) ) {
+				planes_of_filter[0].at<float>(u, v) = !type;
+			}
+		}
+	}
+	
+	GaussianBlur(planes_of_filter[0], planes_of_filter[0], Size(101, 101), 31, 31);
+	planes_of_filter[1] = planes_of_filter[0].clone();
+	merge(planes_of_filter, 2, filter);
+	return spectrum.mul(filter);
+}
+
+inline Mat HybridImage::highPassFilter(const Mat &spectrum, double cutoffFreq) {
+	return filter(spectrum, cutoffFreq, 0);
+}
+
+inline Mat HybridImage::lowPassFilter(const Mat &spectrum, double cutoffFreq) {
+	return filter(spectrum, cutoffFreq, 1);
+}
+
+Mat HybridImage::getSpectrum(const Mat &image) {
+	Mat padded;
+	int size = getOptimalDFTSize(max(image.rows, image.cols));
+	copyMakeBorder(image, padded, 0, size - image.rows, 0, size - image.cols, BORDER_REFLECT, Scalar::all(0));
+
+	Mat planes[] = { Mat_<float>(padded), Mat::zeros(padded.size(), CV_32FC1) };
+	Mat complexI;
+	merge(planes, 2, complexI);
+	dft(complexI, complexI);
+	return complexI;
+}
+
+Mat HybridImage::getImage(const Mat &spectrum) {
+	Mat inverse;
+	dft(spectrum, inverse, DFT_INVERSE | DFT_REAL_OUTPUT);
+	normalize(inverse, inverse, 0, 1, CV_MINMAX);
+	return inverse;
+}
+
+Mat HybridImage::getSpectrumImage(const cv::Mat &image) {
+	Mat spectrum = getSpectrum(image), planes[2], magI;
+	split(spectrum, planes);
+	magnitude(planes[0], planes[1], magI);
+
+	log(magI + Scalar::all(1), magI);
+
+	magI = magI(Rect(0, 0, magI.cols & -2, magI.rows & -2));
+	// rearrange the quadrants of Fourier image  so that the origin is at the image center
+	int cx = magI.cols / 2;
+	int cy = magI.rows / 2;
+
+	Mat q0(magI, Rect(0, 0, cx, cy));
+	Mat q1(magI, Rect(cx, 0, cx, cy));
+	Mat q2(magI, Rect(0, cy, cx, cy));
+	Mat q3(magI, Rect(cx, cy, cx, cy));
+
+	Mat tmp;
+	q0.copyTo(tmp);
+	q3.copyTo(q0);
+	tmp.copyTo(q3);
+	q1.copyTo(tmp);
+	q2.copyTo(q1);
+	tmp.copyTo(q2);
+
+	normalize(magI, magI, 0, 1, CV_MINMAX);
+	return magI;
 }
