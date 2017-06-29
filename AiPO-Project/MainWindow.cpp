@@ -16,7 +16,7 @@ MainWindow::MainWindow(QWidget *parent)
 	connect(ui.AddRight_Button, SIGNAL(released()), this, SLOT(AddRightImageHandler())); 
 	connect(ui.RemoveLeft_Button, SIGNAL(released()), this, SLOT(RemoveLeftImageHandler()));
 	connect(ui.RemoveRigth_Button, SIGNAL(released()), this, SLOT(RemoveRightImageHandler()));
-	connect(ui.Adjust_Slider, SIGNAL(valueChanged(int)), this, SLOT(MixedImageHandler()));
+	connect(ui.Adjust_Slider, SIGNAL(sliderReleased()), this, SLOT(MixedImageHandler()));
 	connect(ui.SaveImage_Button, SIGNAL(released()), this, SLOT(SaveImageHandler()));
 	connect(ui.SaveAnimation_Button, SIGNAL(released()), this, SLOT(SaveAnimationHandler()));
 }
