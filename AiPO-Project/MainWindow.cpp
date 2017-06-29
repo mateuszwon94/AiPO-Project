@@ -64,8 +64,9 @@ void MainWindow::saveImage() {
 	if (ImageMixed_ != nullptr) {
 		QString fileName = QFileDialog::getSaveFileName(this, tr("Save file"), "", tr("PNG (*.png);;JPEG (*.jpeg *.jpg *.jpe)"));
 		Mat* hybrid_image = ImageMixed_->getHybridImage();
-		QImage image = QImage(hybrid_image->data, hybrid_image->cols, hybrid_image->rows, hybrid_image->step, QImage::Format_RGB888);
+		QImage image = QImage(hybrid_image->data, hybrid_image->cols, hybrid_image->rows, hybrid_image->step, QImage::Format_Grayscale8);
 		image.save(fileName);
+		QMessageBox::information(this, tr("Hybrid Images"), tr("Zapisano obraz wynikowy."));
 	} else
 		QMessageBox::warning(this, tr("Hybrid Images"), tr("Nie można zapisać!"));
 }
@@ -80,7 +81,7 @@ void MainWindow::saveMovie() {
 		int codec = CV_FOURCC('M', 'J', 'P', 'G');
 		QString fileName = QFileDialog::getSaveFileName(this, tr("Save file"), "", tr("MJPG (*.avi)"));
 		VideoWriter out_capture;
-		out_capture.open(fileName.toStdString(), codec, fps, Size(rows, cols), true);
+		out_capture.open(fileName.toStdString(), codec, fps, Size(rows, cols), false);
 
 		if (!out_capture.isOpened()) {
 			QMessageBox::warning(this, tr("Hybrid Images"), tr("Nie można zapisać!"));
@@ -88,16 +89,12 @@ void MainWindow::saveMovie() {
 		}
 
 		Mat frame;
+		Mat* hybrid_image = ImageMixed_->getHybridImage();
 		for (double k = 1.0; k >= 0.2; k -= 0.005) {
-			//Mat* hybrid_image = ImageMixed_->getHybridImage();
-			Mat* hybrid_image = ImageLeft_;
 			cv::resize(*hybrid_image, frame, Size(int(rows*k), int(cols*k)));
-			cvtColor(frame, frame, CV_RGB2BGR);
 			copyMakeBorder(frame, frame, int(rows * (1.0 - k) / 2), int(rows * (1.0 - k) / 2), int(cols * (1.0 - k) / 2), int(cols * (1.0 - k) / 2), BORDER_CONSTANT, Scalar::all(0));
 			cv::resize(frame, frame, Size(rows, cols));
 			frames.push_back(frame);
-			imshow("", frame);
-			waitKey(30);
 		}
 
 		for (int i = 0; i < fps; ++i)
@@ -126,14 +123,13 @@ Mat* MainWindow::loadImage() {
 
 	QString fileName = QFileDialog::getOpenFileName(this,
 													tr("Wczytaj obraz po lewej stronie"), "",
-													tr("PNG (*.png);;JPEG (*.jpeg *.jpg *.jpe);;JPEG 2000 (*.jp2);;BMP (*.bmp *.dib);;TIFF (*.tiff *.tif);;Wszystkie pliki (*)"));
-
+													tr("JPEG (*.jpeg *.jpg *.jpe);;JPEG 2000 (*.jp2);;BMP (*.bmp *.dib);;TIFF (*.tiff *.tif);;Wszystkie pliki (*)"));
+	//PNG (*.png);;
 	if ( !fileName.isEmpty() ) {
-		image = imread(fileName.toStdString(), CV_LOAD_IMAGE_COLOR);
+		image = imread(fileName.toStdString(), CV_LOAD_IMAGE_GRAYSCALE);
 		if (!image.data) {
 			exit(EXIT_FAILURE);
 		}
-		cvtColor(image, image, CV_BGR2RGB);
 	}
 
 	return new Mat(image);
@@ -163,7 +159,7 @@ void MainWindow::setImage(Mat* image, QLabel* label) {
 }
 
 void MainWindow::fitImageToLabel(Mat* image, QLabel* label) {
-	QPixmap qpixmap = QPixmap::fromImage(QImage(image->data, image->cols, image->rows, image->step, QImage::Format_RGB888));
+	QPixmap qpixmap = QPixmap::fromImage(QImage(image->data, image->cols, image->rows, image->step, QImage::Format_Grayscale8));
 	label->setPixmap(qpixmap.scaled(label->width(), label->height(), Qt::KeepAspectRatio));
 }
 
