@@ -124,8 +124,8 @@ Mat* MainWindow::loadImage() {
 
 	QString fileName = QFileDialog::getOpenFileName(this,
 													tr("Wczytaj obraz po lewej stronie"), "",
-													tr("JPEG (*.jpeg *.jpg *.jpe);;JPEG 2000 (*.jp2);;BMP (*.bmp *.dib);;TIFF (*.tiff *.tif);;Wszystkie pliki (*)"));
-	//PNG (*.png);;
+													tr("PNG (*.png);;JPEG (*.jpeg *.jpg *.jpe);;JPEG 2000 (*.jp2);;BMP (*.bmp *.dib);;TIFF (*.tiff *.tif);;Wszystkie pliki (*)"));
+
 	if ( !fileName.isEmpty() ) {
 		image = imread(fileName.toStdString(), CV_LOAD_IMAGE_GRAYSCALE);
 		if (!image.data) {
@@ -139,8 +139,12 @@ Mat* MainWindow::loadImage() {
 void MainWindow::setImage(Mat* image, QLabel* label) {
 	if ( image != nullptr && label != nullptr ) {
 		if ( label == ui.LeftImage_Label ) {
+			if ( ImageRight_ != nullptr )
+				cv::resize(*image, *image, ImageRight_->size());
 			ImageLeft_ = image;
 		} else if ( label == ui.RightImage_Label ) {
+			if ( ImageLeft_ != nullptr )
+				cv::resize(*image, *image, ImageLeft_->size());
 			ImageRight_ = image;
 		}
 		fitImageToLabel(image, label);
