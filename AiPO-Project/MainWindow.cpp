@@ -68,7 +68,7 @@ void MainWindow::saveImage() {
 		image.save(fileName);
 		QMessageBox::information(this, tr("Hybrid Images"), tr("Zapisano obraz wynikowy."));
 	} else
-		QMessageBox::warning(this, tr("Hybrid Images"), tr("Nie można zapisać!"));
+		QMessageBox::warning(this, tr("Hybrid Images"), tr("Nie mozna zapisac!"));
 }
 
 void MainWindow::saveMovie() {
@@ -81,20 +81,21 @@ void MainWindow::saveMovie() {
 		int codec = CV_FOURCC('M', 'J', 'P', 'G');
 		QString fileName = QFileDialog::getSaveFileName(this, tr("Save file"), "", tr("MJPG (*.avi)"));
 		VideoWriter out_capture;
-		out_capture.open(fileName.toStdString(), codec, fps, Size(rows, cols), false);
+		out_capture.open(fileName.toStdString(), codec, fps, Size(rows, cols), true);
 
 		if (!out_capture.isOpened()) {
-			QMessageBox::warning(this, tr("Hybrid Images"), tr("Nie można zapisać!"));
+			QMessageBox::warning(this, tr("Hybrid Images"), tr("Nie mozna zapisac!"));
 			return;
 		}
 
 		Mat frame;
 		Mat* hybrid_image = ImageMixed_->getHybridImage();
 		for (double k = 1.0; k >= 0.2; k -= 0.005) {
-			cv::resize(*hybrid_image, frame, Size(int(rows*k), int(cols*k)));
+			cv::resize(*hybrid_image, frame, Size(int(rows * k), int(cols * k)));
+			cvtColor(frame, frame, CV_GRAY2BGR);
 			copyMakeBorder(frame, frame, int(rows * (1.0 - k) / 2), int(rows * (1.0 - k) / 2), int(cols * (1.0 - k) / 2), int(cols * (1.0 - k) / 2), BORDER_CONSTANT, Scalar::all(0));
 			cv::resize(frame, frame, Size(rows, cols));
-			frames.push_back(frame);
+			frames.push_back(frame); 
 		}
 
 		for (int i = 0; i < fps; ++i)
@@ -112,10 +113,10 @@ void MainWindow::saveMovie() {
 		for (int i = 0; i < fps; ++i)
 			out_capture << frames[0];
 
-		QMessageBox::information(this, tr("Hybrid Images"), tr("Zapisano animację wynikową."));
+		QMessageBox::information(this, tr("Hybrid Images"), tr("Zapisano animacje wynikowa."));
 		
 	} else
-		QMessageBox::warning(this, tr("Hybrid Images"), tr("Nie można zapisać!"));
+		QMessageBox::warning(this, tr("Hybrid Images"), tr("Nie mozna zapisac!"));
 }
 
 Mat* MainWindow::loadImage() {
