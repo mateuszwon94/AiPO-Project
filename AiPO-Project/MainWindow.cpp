@@ -163,7 +163,7 @@ void MainWindow::setImage(Mat* image, QLabel* label) {
 	}
 }
 
-void MainWindow::fitImageToLabel(Mat* image, QLabel* label) {
+void MainWindow::fitImageToLabel(Mat* image, QLabel* label) const {
 	QPixmap qpixmap = QPixmap::fromImage(QImage(image->data, image->cols, image->rows, image->step, QImage::Format_Grayscale8));
 	label->setPixmap(qpixmap.scaled(label->width(), label->height(), Qt::KeepAspectRatio));
 }
@@ -210,6 +210,6 @@ void MainWindow::createMixedImage() {
 	}
 }
 
-double MainWindow::getSliderValue() {
+double MainWindow::getSliderValue() const {
 	return ui.Adjust_Slider->value();
 }

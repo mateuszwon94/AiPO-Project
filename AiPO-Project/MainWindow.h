@@ -26,11 +26,11 @@ private:
 	void saveImage();
 	void saveMovie();
 	void setImage(cv::Mat* image, QLabel* label);
-	void fitImageToLabel(cv::Mat* image, QLabel* label);
+	void fitImageToLabel(cv::Mat* image, QLabel* label) const;
 	void loadImageFromButton(QPushButton* button);
 	void resizeEvent(QResizeEvent *event) override;
 	void createMixedImage();
-	double getSliderValue();
+	double getSliderValue() const;
 
 	Ui::MainWindowClass ui;
 	cv::Mat* ImageLeft_;
